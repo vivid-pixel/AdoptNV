@@ -2,26 +2,25 @@
 
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, render_template
+# from flask import Flask, render_template
 from datetime import datetime, timedelta
 import shelve
 
-# Global variables, kept to a minimum
+# Global constants
 CACHE_FILE = "adoptnv_results"
 
 
 def main():
+    """AdoptNV's goal is to encourage animal adoption in the US state of Nevada."""
+
     # Check for existing search result cache
     animals_cache = shelve.open(CACHE_FILE)
 
     if animals_cache:
         cache_date = animals_cache["date_stamp"]
-        # Set a maximum age of 1 hour for cached search results
-        # TODO: Find a working way of checking if results are outdated
-        cache_date_limit = cache_date + timedelta(hours=1)
-
         print(f"Found previous search results in local cache (Time stamp: {cache_date})")
-        if cache_date <= cache_date_limit:
+
+        if cache_is_valid(cache_date):
             animals_list = animals_cache["animals_list"]
         else:
             print("Cached results too old (> 1 hr). Updating!")
@@ -32,7 +31,23 @@ def main():
     print_results(animals_list)
 
 
+def cache_is_valid(cache_date):
+    """Check if cache file is recent enough to not require an update
+    Returns True or False
+    """
+
+    CACHE_AGE_LIMIT = timedelta(hours=1)  # Max age of 1 hr for cached results
+    date_now = datetime.now()
+
+    if date_now - cache_date <= CACHE_AGE_LIMIT:
+        return True
+    else:
+        return False
+
+
 def print_results(animals_list):
+    """Print adoptable animal results."""
+
     print("Printing search results.")
     SPACER = "======"
     DIVIDER = "---"
@@ -51,6 +66,8 @@ def print_results(animals_list):
 
 
 def animal_search():
+    """Scour the 'net for cute animals that want to adopt a human"""
+
     # Declare animals_list to store the individual pets
     animals_list = []
 
@@ -89,6 +106,7 @@ def animal_search():
             pet_sex = pet.ul.li.find_next_sibling()
             pet_id = pet_sex.find_next_sibling()
 
+            # This site displays either "FEE-WAIVED" or nothing at all
             if pet.find("h3").text != "FEE-WAIVED":
                 pet_fee_waived = False
             else:
@@ -108,8 +126,10 @@ def animal_search():
 
     # Write animals_list to a file to save the search results
         with shelve.open(CACHE_FILE) as animals_cache:
+            cache_date = animals_cache["date_stamp"]
+
             # We need to write to the cache only if these results are newly fetched
-            if animals_cache["date_stamp"] < (datetime.now() - timedelta(hours=1)):
+            if cache_is_valid(cache_date):
                 animals_cache["animals_list"] = animals_list
                 animals_cache["date_stamp"] = datetime.now()
 
