@@ -2,7 +2,6 @@
 
 import requests
 from bs4 import BeautifulSoup
-# from flask import Flask, render_template
 from datetime import datetime, timedelta
 import shelve
 
@@ -21,14 +20,30 @@ def main():
         print(f"Found previous search results in local cache (Time stamp: {cache_date})")
 
         if cache_is_valid(cache_date):
+            print("Previous results are still fresh. Building list.")
             animals_list = animals_cache["animals_list"]
         else:
-            print("Cached results too old (> 1 hr). Updating!")
+            print("Cached results are stale (> 1 hr). Updating!")
             animals_list = animal_search()
-    else:
-        animals_list = animal_search()
+            # Pass the list to save_results to update the cache
+            save_results(animals_list)
 
     print_results(animals_list)
+
+
+def save_results(animals_list):
+    """Write animals_list to a file to save the search results"""
+
+    with shelve.open(CACHE_FILE) as animals_cache:
+        animals_cache["animals_list"] = animals_list
+        animals_cache["date_stamp"] = datetime.now()
+
+        return True
+
+
+def flask_test():
+    calculation = 5 * 5
+    return calculation
 
 
 def cache_is_valid(cache_date):
@@ -36,12 +51,14 @@ def cache_is_valid(cache_date):
     Returns True or False
     """
 
-    CACHE_AGE_LIMIT = timedelta(hours=1)  # Max age of 1 hr for cached results
+    cache_age_limit = timedelta(hours=1)  # Max age of 1 hr for cached results
     date_now = datetime.now()
 
-    if date_now - cache_date <= CACHE_AGE_LIMIT:
+    if date_now - cache_date <= cache_age_limit:
+        print(f"TRUE - {date_now}, {cache_date}, {cache_age_limit}")
         return True
     else:
+        print(f"FALSE - {date_now}, {cache_date}, {cache_age_limit}")
         return False
 
 
@@ -49,9 +66,9 @@ def print_results(animals_list):
     """Print adoptable animal results."""
 
     print("Printing search results.")
-    SPACER = "======"
-    DIVIDER = "---"
-    print(f"{SPACER} RESULTS ({len(animals_list)} animals found) {SPACER}")
+    spacer = "======"
+    divider = "---"
+    print(f"{spacer} RESULTS ({len(animals_list)} animals found) {spacer}")
     for animal in animals_list:
         # Name, Image, URL, Location, Sex, ID, Fee
         print(f"Name: {animal["Name"]}")
@@ -61,8 +78,8 @@ def print_results(animals_list):
         print(f"Sex: {animal["Sex"]}")
         print(f"ID: {animal["ID"]}")
         print(f"Fee: {animal["Fee"]}")
-        print(DIVIDER)
-    print(f"{SPACER} END OF RESULTS {SPACER}")
+        print(divider)
+    print(f"{spacer} END OF RESULTS {spacer}")
 
 
 def animal_search():
@@ -124,17 +141,7 @@ def animal_search():
         # Increment page number before we continue the loop
         current_page += 1
 
-    # Write animals_list to a file to save the search results
-        with shelve.open(CACHE_FILE) as animals_cache:
-            cache_date = animals_cache["date_stamp"]
-
-            # We need to write to the cache only if these results are newly fetched
-            if cache_is_valid(cache_date):
-                animals_cache["animals_list"] = animals_list
-                animals_cache["date_stamp"] = datetime.now()
-
     # Now return the list of animals to the parent method
     return animals_list
-
 
 main()
