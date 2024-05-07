@@ -55,10 +55,10 @@ def cache_is_valid(cache_date):
     date_now = datetime.now()
 
     if date_now - cache_date <= cache_age_limit:
-        print(f"TRUE - {date_now}, {cache_date}, {cache_age_limit}")
+        # print(f"TRUE - {date_now}, {cache_date}, {cache_age_limit}")
         return True
     else:
-        print(f"FALSE - {date_now}, {cache_date}, {cache_age_limit}")
+        # print(f"FALSE - {date_now}, {cache_date}, {cache_age_limit}")
         return False
 
 
@@ -70,8 +70,9 @@ def print_results(animals_list):
     divider = "---"
     print(f"{spacer} RESULTS ({len(animals_list)} animals found) {spacer}")
     for animal in animals_list:
-        # Name, Image, URL, Location, Sex, ID, Fee
+        # Name, Stray, Image, URL, Location, Sex, ID, Fee
         print(f"Name: {animal["Name"]}")
+        print(f"Stray: {animal["Stray"]}")
         print(f"Image: {animal["Image"]}")
         print(f"URL: {animal["URL"]}")
         print(f"Location: {animal["Location"]}")
@@ -114,7 +115,16 @@ def animal_search():
         # The rest of this loop will run regardless of which page we're on.
         pet_elements = results.find_all("a", class_="item")
         for pet in pet_elements:
+            # Names contain an asterisk if they are strays and were named by the shelter
             pet_name = pet.find("img", class_="lazy").attrs["alt"]
+            # If there's an asterisk, mark pet as a stray, then remove the asterisk from its name
+            if pet_name[0] == "*":
+                # Shelter's current naming convention has the asterisk as the 1st character
+                pet_name = pet_name[1:]
+                pet_is_stray = True
+            else:
+                pet_is_stray = False
+
             pet_image = pet.find("img", class_="lazy").attrs["data-src"]
             pet_url = pet.attrs["href"]
             pet_location = pet.ul.li.text
@@ -123,26 +133,30 @@ def animal_search():
             pet_sex = pet.ul.li.find_next_sibling()
             pet_id = pet_sex.find_next_sibling()
 
-            # This site displays either "FEE-WAIVED" or nothing at all
-            if pet.find("h3").text != "FEE-WAIVED":
-                pet_fee_waived = False
+            # This shelter's site displays either "FEE-WAIVED" or nothing at all.
+            if pet.find("h3").text == "FEE-WAIVED":
+                # What a bargain! Animal requires no fee.
+                pet_has_fee = False
             else:
-                pet_fee_waived = True
+                # Fee is not waived, so this cutie-pie will cost you something.
+                pet_has_fee = False
 
-            # Append this animal's dictionary to our list
+            # Append this animal's dictionary to our list.
             animals_list.append({"Name": pet_name,
+                                 "Stray": pet_is_stray,
                                  "Image": pet_image,
                                  "URL": pet_url,
                                  "Location": pet_location,
                                  "Sex": pet_sex.text,
                                  "ID": pet_id.text,
-                                 "Fee": pet_fee_waived})
+                                 "Fee": pet_has_fee})
 
         # Increment page number before we continue the loop
         current_page += 1
 
     # Now return the list of animals to the parent method
     return animals_list
+
 
 if __name__ == "__main__":
     main()
