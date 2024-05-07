@@ -144,4 +144,5 @@ def animal_search():
     # Now return the list of animals to the parent method
     return animals_list
 
-main()
+if __name__ == "__main__":
+    main()
