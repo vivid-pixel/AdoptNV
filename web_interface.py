@@ -1,5 +1,5 @@
 from flask import Flask, request
-from adoptnv_core import animal_search
+from adoptnv_core import search_for_animals
 
 # Flask essentials
 app = Flask(__name__)
@@ -7,8 +7,6 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def home():
-    # result = flask_test()
-    # return f"Well, Flask [still] works and provided a test result of: {result}"
     return """
         <html>
             <body>
@@ -20,7 +18,7 @@ def home():
 
 @app.route("/results")
 def results():
-    animals_list = animal_search()
+    animals_list = search_for_animals()
     animals_string = ""
 
     for animal in animals_list:

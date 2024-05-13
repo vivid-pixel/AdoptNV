@@ -12,79 +12,112 @@ CACHE_FILE = "adoptnv_results"
 def main():
     """AdoptNV's goal is to encourage animal adoption in the US state of Nevada."""
 
-    # Check for existing search result cache
-    animals_cache = shelve.open(CACHE_FILE)
+    # Either open or create cache file
+    with shelve.open(CACHE_FILE) as results_cache:
+        # Flag gets later set to True only if the cache file is still empty / was just created
+        first_run = False
+        # Flag set to True if we detect the cache db is old, otherwise False
+        cache_discarded = False
 
-    if animals_cache:
-        cache_date = animals_cache["date_stamp"]
-        print(f"Found previous search results in local cache (Time stamp: {cache_date})")
+        # We check the time stamp key from the cache file (if no timme stamp, it's a new file)
+        try:
+            cache_date = results_cache["date_stamp"]
 
-        if cache_is_valid(cache_date):
-            print("Previous results are still fresh. Building list.")
-            animals_list = animals_cache["animals_list"]
-        else:
-            print("Cached results are stale (> 1 hr). Updating!")
-            animals_list = animal_search()
-            # Pass the list to save_results to update the cache
-            save_results(animals_list)
+            # We won't use the results if they are too old
+            if not cache_is_recent(cache_date):
+                cache_discarded = True
+        except KeyError:
+            # KeyError indicates the file was just made and contains no results yet
+            first_run = True
+        except Exception as e:
+            print(e)
+        finally:
+            if first_run or cache_discarded:
+                if first_run:
+                    print("Welcome to AdoptNV! I'll help you find the perfect animal companion.")
+                elif cache_discarded:
+                    print("Welcome back to AdoptNV!")
+                    print("You've searched for animals previously, but I'll fetch you some fresh results.")
 
-    print_results(animals_list)
+                animals_list = search_for_animals()
+                save_results(animals_list)
+            else:
+                print("Welcome back to AdoptNV!")
+                print("It looks as if you've performed a recent search, so I'll restore those results from the cache.")
+                # Load the results cache, but we don't need to save as we aren't updating/changing the cache
+                animals_list = load_results(results_cache)
+
+            # We print the list
+            print_results(animals_list)
+
+
+
+def load_results(results_cache):
+    """Converts the DB of cached results into a list format that we can work with"""
+
+    animals_list = []
+
+    for animal in results_cache["animals_list"]:
+        animals_list.append(animal)
+        
+    return animals_list
 
 
 def save_results(animals_list):
     """Write animals_list to a file to save the search results"""
 
-    with shelve.open(CACHE_FILE) as animals_cache:
-        animals_cache["animals_list"] = animals_list
-        animals_cache["date_stamp"] = datetime.now()
+    with shelve.open(CACHE_FILE) as results_cache:
+        results_cache["animals_list"] = animals_list
+        results_cache["date_stamp"] = datetime.now()
+        print(f"Saved results to local cache.")
 
         return True
 
 
-def flask_test():
-    calculation = 5 * 5
-    return calculation
+def cache_is_recent(cache_date):
+    """Check if cache file is fresh enough to not require an update. Returns true or false"""
 
-
-def cache_is_valid(cache_date):
-    """Check if cache file is recent enough to not require an update
-    Returns True or False
-    """
 
     cache_age_limit = timedelta(hours=1)  # Max age of 1 hr for cached results
     date_now = datetime.now()
 
     if date_now - cache_date <= cache_age_limit:
-        # print(f"TRUE - {date_now}, {cache_date}, {cache_age_limit}")
         return True
     else:
-        # print(f"FALSE - {date_now}, {cache_date}, {cache_age_limit}")
         return False
 
 
 def print_results(animals_list):
     """Print adoptable animal results."""
+    list_length = len(animals_list)
 
-    print("Printing search results.")
-    spacer = "======"
-    divider = "---"
-    print(f"{spacer} RESULTS ({len(animals_list)} animals found) {spacer}")
-    for animal in animals_list:
-        # Name, Stray, Image, URL, Location, Sex, ID, Fee
-        print(f"Name: {animal["Name"]}")
-        print(f"Stray: {animal["Stray"]}")
-        print(f"Image: {animal["Image"]}")
-        print(f"URL: {animal["URL"]}")
-        print(f"Location: {animal["Location"]}")
-        print(f"Sex: {animal["Sex"]}")
-        print(f"ID: {animal["ID"]}")
-        print(f"Fee: {animal["Fee"]}")
-        print(divider)
-    print(f"{spacer} END OF RESULTS {spacer}")
+    if list_length == 0:
+        print("Seems like the list failed to populate.")
+    else:
+        print("Printing search results.")
+        spacer = "======"
+        divider = "---"
+        print(f"{spacer} RESULTS ({list_length} animals found) {spacer}")
+        try:
+            for animal in animals_list:
+                # Name, Stray, Image, URL, Location, Sex, ID, Fee
+                print(f"Name: {animal["Name"]}")
+                print(f"Stray: {animal["Stray"]}")
+                print(f"Image: {animal["Image"]}")
+                print(f"URL: {animal["URL"]}")
+                print(f"Location: {animal["Location"]}")
+                print(f"Sex: {animal["Sex"]}")
+                print(f"ID: {animal["ID"]}")
+                print(f"Fee: {animal["Fee"]}")
+                print(divider)
+        except TypeError:
+            print("Something seems wrong with the list of results. Unable to populate list.")
+        finally:
+            print(f"{spacer} END OF RESULTS {spacer}")
 
 
-def animal_search():
-    """Scour the 'net for cute animals that want to adopt a human"""
+def search_for_animals():
+    """Scour the net for cute animals that want to adopt a human. Returns animals_list"""
 
     # Declare animals_list to store the individual pets
     animals_list = []
@@ -96,7 +129,7 @@ def animal_search():
 
     # Find list of pages and define variable with total count.
     pages_element = soup.find("li", class_="next")
-    total_pages = int(pages_element.previous_element)
+    total_pages = int(pages_element.previous)
 
     print(f"Processing {total_pages} pages of adoption results.")
     current_page = 1  # Declare and define page counter
