@@ -43,13 +43,12 @@ def main():
                 save_results(animals_list)
             else:
                 print("Welcome back to AdoptNV!")
-                print("It looks as if you've performed a recent search, so I'll restore those results from the cache.")
+                print("I see you've performed a recent search, so I'll restore those results from the cache.")
                 # Load the results cache, but we don't need to save as we aren't updating/changing the cache
                 animals_list = load_results(results_cache)
 
             # We print the list
             print_results(animals_list)
-
 
 
 def load_results(results_cache):
@@ -76,7 +75,6 @@ def save_results(animals_list):
 
 def cache_is_recent(cache_date):
     """Check if cache file is fresh enough to not require an update. Returns true or false"""
-
 
     cache_age_limit = timedelta(hours=1)  # Max age of 1 hr for cached results
     date_now = datetime.now()
@@ -118,6 +116,9 @@ def print_results(animals_list):
 
 def search_for_animals():
     """Scour the net for cute animals that want to adopt a human. Returns animals_list"""
+
+    # TODO: Nevada SPCA - https://www.shelterluv.com/embed/20674
+    # TODO: https://cat.rescueme.org/Nevada https://dog.rescueme.org/Nevada
 
     # Declare animals_list to store the individual pets
     animals_list = []

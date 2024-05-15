@@ -1,35 +1,28 @@
-from flask import Flask, request
+from nicegui import ui
 from adoptnv_core import search_for_animals
 
-# Flask essentials
-app = Flask(__name__)
+
+@ui.page("/")
+def index():
+    ui.label("AdoptNV Web Test - now using NiceGUI")
+    ui.link("Click here to search", results)
+
+    ui.run()
 
 
-@app.route("/", methods=["GET"])
-def home():
-    return """
-        <html>
-            <body>
-                <h1>AdoptNV Web Test</h1>
-                <p><a href="/results">Click here to search</a> (and then wait a few seconds)</p>
-            </body>
-        </html>
-    """
-
-@app.route("/results")
+@ui.page("/results")
 def results():
     animals_list = search_for_animals()
-    animals_string = ""
 
     for animal in animals_list:
-        animals_string += f'<img src="{animal["Image"]}" width="100" height="100" alt="{animal["Name"]}"><br>'
-        animals_string += f'Name: <strong>{animal["Name"]}</strong><br>'
-        animals_string += f'Stray: {animal["Stray"]}<br>'
-        animals_string += f'URL: <a href="{animal["URL"]}">{animal["URL"]}</a><br>'
-        animals_string += f'Location: {animal["Location"]}<br>'
-        animals_string += f'Sex: {animal["Sex"]}<br>'
-        animals_string += f'ID: {animal["ID"]}<br>'
-        animals_string += f'Fee: {animal["Fee"]}<br>'
-        animals_string += "<hr>"
+        with ui.link(target=animal["URL"]):
+            with ui.image(animal["Image"]).classes("w-64"):
+                ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
+        ui.label(f"Stray: {animal["Stray"]}")
+        ui.label(f"Location: {animal["Location"]}")
+        ui.label(f"Sex: {animal["Sex"]}")
+        ui.label(f"ID: {animal["ID"]}")
+        ui.label(f"Fee: {animal["Fee"]}")
 
-    return f"{animals_string}"
+
+index()

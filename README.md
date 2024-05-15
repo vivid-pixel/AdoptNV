@@ -13,6 +13,6 @@ Technologies involved:
 <ul>
 <li>Python 3</li>
 <li>BeautifulSoup</li>
-<li>Flask</li>
-<li>PyCharm</li>
+<li><a href="https://nicegui.io/">NiceGUI</a></li>
+<li><a href="https://www.jetbrains.com/pycharm/">PyCharm</a></li>
 </ul>
