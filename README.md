@@ -6,13 +6,10 @@ This has **no affiliation** with any shelter, but currently the search results c
 Vegas. Other shelters will be implemented, but I have limited it to Nevada to focus on helping my local community and 
 to keep the project within a reasonable scope. 
 
-This project is one big learning experience. A Web application was chosen for portability and accessibility, but you 
-may also run AdoptNV through the terminal.
-
-Technologies involved:
+This project is one big learning experience. Technologies involved:
 <ul>
-<li>Python 3</li>
-<li>BeautifulSoup</li>
+<li><a href="https://www.python.org/">Python 3</a></li>
+<li><a href="https://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a></li>
 <li><a href="https://nicegui.io/">NiceGUI</a></li>
 <li><a href="https://www.jetbrains.com/pycharm/">PyCharm</a></li>
 </ul>

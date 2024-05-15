@@ -9,48 +9,6 @@ import shelve
 CACHE_FILE = "adoptnv_results"
 
 
-def main():
-    """AdoptNV's goal is to encourage animal adoption in the US state of Nevada."""
-
-    # Either open or create cache file
-    with shelve.open(CACHE_FILE) as results_cache:
-        # Flag gets later set to True only if the cache file is still empty / was just created
-        first_run = False
-        # Flag set to True if we detect the cache db is old, otherwise False
-        cache_discarded = False
-
-        # We check the time stamp key from the cache file (if no timme stamp, it's a new file)
-        try:
-            cache_date = results_cache["date_stamp"]
-
-            # We won't use the results if they are too old
-            if not cache_is_recent(cache_date):
-                cache_discarded = True
-        except KeyError:
-            # KeyError indicates the file was just made and contains no results yet
-            first_run = True
-        except Exception as e:
-            print(e)
-        finally:
-            if first_run or cache_discarded:
-                if first_run:
-                    print("Welcome to AdoptNV! I'll help you find the perfect animal companion.")
-                elif cache_discarded:
-                    print("Welcome back to AdoptNV!")
-                    print("You've searched for animals previously, but I'll fetch you some fresh results.")
-
-                animals_list = search_for_animals()
-                save_results(animals_list)
-            else:
-                print("Welcome back to AdoptNV!")
-                print("I see you've performed a recent search, so I'll restore those results from the cache.")
-                # Load the results cache, but we don't need to save as we aren't updating/changing the cache
-                animals_list = load_results(results_cache)
-
-            # We print the list
-            print_results(animals_list)
-
-
 def load_results(results_cache):
     """Converts the DB of cached results into a list format that we can work with"""
 
@@ -58,7 +16,7 @@ def load_results(results_cache):
 
     for animal in results_cache["animals_list"]:
         animals_list.append(animal)
-        
+
     return animals_list
 
 
@@ -68,9 +26,6 @@ def save_results(animals_list):
     with shelve.open(CACHE_FILE) as results_cache:
         results_cache["animals_list"] = animals_list
         results_cache["date_stamp"] = datetime.now()
-        print(f"Saved results to local cache.")
-
-        return True
 
 
 def cache_is_recent(cache_date):
@@ -132,7 +87,6 @@ def search_for_animals():
     pages_element = soup.find("li", class_="next")
     total_pages = int(pages_element.previous)
 
-    print(f"Processing {total_pages} pages of adoption results.")
     current_page = 1  # Declare and define page counter
 
     # Keep scraping adoption results until we've parsed the final page
@@ -193,4 +147,4 @@ def search_for_animals():
 
 
 if __name__ == "__main__":
-    main()
+    print("This file contains logic for the web app. Try running adoptnv_web.py, instead!")
