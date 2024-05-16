@@ -83,6 +83,15 @@ def display_results(animals_list):
     # Divides number of animals by how many animals per page, then rounds it up to nearest int.
     pages_total = math.ceil(len(animals_list) / animals_per_page)
 
+    # Create a list of page numbers for the page selector
+    page_numbers_list = []
+    for page_number in range(1, pages_total):
+        page_numbers_list.append(page_number)
+
+    # Display page selector and start on page 1
+    # TODO: Make page selection functional
+    ui.toggle(page_numbers_list, value=1)
+
     for animal in animals_list:
         with ui.card():
             with ui.link(target=animal["URL"]):
