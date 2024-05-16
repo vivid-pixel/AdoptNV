@@ -40,33 +40,33 @@ def cache_is_recent(cache_date):
         return False
 
 
-def print_results(animals_list):
-    """Print adoptable animal results."""
-    list_length = len(animals_list)
-
-    if list_length == 0:
-        print("Seems like the list failed to populate.")
-    else:
-        print("Printing search results.")
-        spacer = "======"
-        divider = "---"
-        print(f"{spacer} RESULTS ({list_length} animals found) {spacer}")
-        try:
-            for animal in animals_list:
-                # Name, Stray, Image, URL, Location, Sex, ID, Fee
-                print(f"Name: {animal["Name"]}")
-                print(f"Stray: {animal["Stray"]}")
-                print(f"Image: {animal["Image"]}")
-                print(f"URL: {animal["URL"]}")
-                print(f"Location: {animal["Location"]}")
-                print(f"Sex: {animal["Sex"]}")
-                print(f"ID: {animal["ID"]}")
-                print(f"Fee: {animal["Fee"]}")
-                print(divider)
-        except TypeError:
-            print("Something seems wrong with the list of results. Unable to populate list.")
-        finally:
-            print(f"{spacer} END OF RESULTS {spacer}")
+# def print_results(animals_list):
+#     """Print adoptable animal results."""
+#     list_length = len(animals_list)
+#
+#     if list_length == 0:
+#         print("Seems like the list failed to populate.")
+#     else:
+#         print("Printing search results.")
+#         spacer = "======"
+#         divider = "---"
+#         print(f"{spacer} RESULTS ({list_length} animals found) {spacer}")
+#         try:
+#             for animal in animals_list:
+#                 # Name, Stray, Image, URL, Location, Sex, ID, Fee
+#                 print(f"Name: {animal["Name"]}")
+#                 print(f"Stray: {animal["Stray"]}")
+#                 print(f"Image: {animal["Image"]}")
+#                 print(f"URL: {animal["URL"]}")
+#                 print(f"Location: {animal["Location"]}")
+#                 print(f"Sex: {animal["Sex"]}")
+#                 print(f"ID: {animal["ID"]}")
+#                 print(f"Fee: {animal["Fee"]}")
+#                 print(divider)
+#         except TypeError:
+#             print("Something seems wrong with the list of results. Unable to populate list.")
+#         finally:
+#             print(f"{spacer} END OF RESULTS {spacer}")
 
 
 def search_for_animals():
