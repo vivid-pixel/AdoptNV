@@ -1,20 +1,42 @@
 #!/usr/bin/env python3
+import math
 
-from nicegui import ui
 from adoptnv_core import *
+from nicegui import ui
 
 
-@ui.page("/")
+def include_page_top():
+    """Shared among all pages and includes title, header text, etc."""
+
+    ui.page_title("AdoptNV - Adopt a pet!")
+
+    with ui.header(elevated=True).style("background-color: #3d3d3d").classes("items-center justify-between"):
+        ui.label("AdoptNV")
+
+
+def include_page_bottom():
+    """Shared among all pages and includes footer."""
+
+    with ui.footer().style("background-color: #6c6c6c"):
+        ui.label("AdoptNV is not affiliated with any animal shelter")
+
+
+@ui.page("/", dark=True)
 def index_page():
-    ui.label("AdoptNV Web Test - now using NiceGUI")
+    include_page_top()
 
-    ui.link("Click here to find a pet pal", results_page)
+    ui.label("AdoptNV Web Test - now using NiceGUI")
+    ui.button("Click here to find a pet pal", on_click=lambda: ui.navigate.to(find_pets_page))
+
+    include_page_bottom()
 
     ui.run()
 
 
-@ui.page("/results")
-def results_page():
+@ui.page("/pets", dark=True)
+def find_pets_page():
+    include_page_top()
+
     with shelve.open(CACHE_FILE) as results_cache:
         # Flag gets later set to True only if the cache file is still empty / was just created
         first_run = False
@@ -50,12 +72,19 @@ def results_page():
                 animals_list = load_results(results_cache)
 
             # We print the list
-            print_results(animals_list)
+            display_results(animals_list)
+
+    include_page_bottom()
 
 
-def print_results(animals_list):
+def display_results(animals_list):
+    animals_per_page = 10
+
+    # Divides number of animals by how many animals per page, then rounds it up to nearest int.
+    pages_total = math.ceil(len(animals_list) / animals_per_page)
+
     for animal in animals_list:
-        with ui.card().tight():
+        with ui.card():
             with ui.link(target=animal["URL"]):
                 with ui.image(animal["Image"]).classes("w-64"):
                     ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
