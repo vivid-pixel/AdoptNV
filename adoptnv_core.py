@@ -40,6 +40,39 @@ def cache_is_recent(cache_date):
         return False
 
 
+def build_results():
+    with shelve.open(CACHE_FILE) as results_cache:
+        # first_run: cache file was empty; cache_discarded: file too old; exception: unrecoverable error
+        return_flags = {
+            "first_run": False,
+            "cache_discarded": False,
+            "exception": None
+        }
+
+        # Check the time stamp key from the cache file (if no time stamp, it's a new file)
+        try:
+            cache_date = results_cache["date_stamp"]
+
+            # We won't use the results if they are too old
+            if not cache_is_recent(cache_date):
+                return_flags["cache_discarded"] = "True"
+        except KeyError:
+            # KeyError indicates the file was just made and contains no results yet
+            return_flags["first_run"] = "True"
+        except Exception as bad_thing:
+            return_flags["exception"] = bad_thing
+        finally:
+            if return_flags["first_run"] or return_flags["cache_discarded"]:
+                animals_list = search_for_animals()
+                save_results(animals_list)
+            else:
+                # Load the results cache, but we don't need to save as we aren't updating/changing the cache
+                animals_list = load_results(results_cache)
+
+        # We return the list to be printed, plus any flags
+        return animals_list, return_flags
+
+
 # def print_results(animals_list):
 #     """Print adoptable animal results."""
 #     list_length = len(animals_list)
