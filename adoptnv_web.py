@@ -9,7 +9,7 @@ def include_page_top():
     """Shared among all pages and includes header text."""
 
     with ui.header(elevated=True).style("background-color: #3d3d3d").classes("items-center justify-between"):
-        ui.link("AdoptNV :: Find pets in Nevada","/")
+        ui.link("AdoptNV", "/")
 
 
 def include_page_bottom():
@@ -27,9 +27,6 @@ def index_page():
     ui.button("Click here to find a pet pal", on_click=lambda: ui.navigate.to(find_pets_page))
 
     include_page_bottom()
-
-    # TODO: Disable auto-reload / Resolve "asyncio.run() cannot be called from a running event loop"
-    ui.run(reload=True, title="AdoptNV :: Adopt a pet!", dark=True)
 
 
 @ui.page("/pets")
@@ -54,42 +51,53 @@ def find_pets_page():
             ui.label("I see you've performed a recent search, so I'll restore those results from the cache.")
 
         # Done with greetings; now show the pet results.
-        display_results(pet_results)
+        display_results(pet_results, 1)
 
     include_page_bottom()
 
 
-def display_results(animals_list):
-    animals_per_page = 10
+@ui.refreshable
+def display_results(pets_list, selected_page=1):
+    pets_per_page = 10
 
     # Divides number of animals by how many animals per page, then rounds it up to nearest int.
-    pages_total = math.ceil(len(animals_list) / animals_per_page)
+    pages_total = math.ceil(len(pets_list) / pets_per_page)
 
     # Create a list of page numbers for the page selector
-    page_numbers_list = []
-    for page_number in range(1, pages_total):
-        page_numbers_list.append(page_number)
+    page_numbers = []
+    for page in range(1, pages_total):
+        page_numbers.append(page)
 
-    # Display page selector and start on page 1
-    # TODO: Make page selection functional
-    ui.toggle(page_numbers_list, value=1)
+    # Display page selector above results
+    with ui.select(page_numbers, value=selected_page, label="Page").classes('w-20') as page_selector:
+        page_selector.on_value_change(lambda: display_results.refresh(pets_list, page_selector.value))
 
-    for animal in animals_list:
-        with ui.card():
-            with ui.link(target=animal["URL"]):
-                with ui.image(animal["Image"]).classes("w-64"):
-                    ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
-            with ui.grid(columns=2):
-                ui.label("Stray: ")
-                ui.label(str(animal["Stray"]))
-                ui.label("Location: ")
-                ui.label(animal["Location"])
-                ui.label("Sex: ")
-                ui.label(animal["Sex"])
-                ui.label("ID: ")
-                ui.label(animal["ID"])
-                ui.label("Fee: ")
-                ui.label(str(animal["Fee"]))
+    # Count pets as we display them on the page, so we know when to stop
+    pets_on_page = 0
+
+    # Skip pets that should be on previous pages
+    starting_from = selected_page * 10
+
+    # Begin iterating and printing pets. Uses list slicing to skip pets from previous pages
+    for animal in pets_list[starting_from:]:
+        if pets_on_page < pets_per_page:
+            pets_on_page += 1
+
+            with ui.card():
+                with ui.link(target=animal["URL"]):
+                    with ui.image(animal["Image"]).classes("w-64"):
+                        ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
+                with ui.grid(columns=2):
+                    ui.label("Stray: ")
+                    ui.label(str(animal["Stray"]))
+                    ui.label("Location: ")
+                    ui.label(animal["Location"])
+                    ui.label("Sex: ")
+                    ui.label(animal["Sex"])
+                    ui.label("ID: ")
+                    ui.label(animal["ID"])
+                    ui.label("Fee: ")
+                    ui.label(str(animal["Fee"]))
 
 
-index_page()
+ui.run(reload=False, title="AdoptNV :: Find pets in Nevada!", dark=True)
