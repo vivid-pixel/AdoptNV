@@ -105,8 +105,7 @@ def build_results():
 def search_for_animals():
     """Scour the net for cute animals that want to adopt a human. Returns animals_list"""
 
-    # TODO: Nevada SPCA - https://www.shelterluv.com/embed/20674
-    # TODO: https://cat.rescueme.org/Nevada https://dog.rescueme.org/Nevada
+    # TODO: Nevada SPCA, RescueMe!
 
     # Declare animals_list to store the individual pets
     animals_list = []
@@ -180,4 +179,4 @@ def search_for_animals():
 
 
 if __name__ == "__main__":
-    print("This file contains logic for the web app. Try running adoptnv_web.py, instead!")
+    print("This file contains logic for the web app. Try running web.py, instead!")

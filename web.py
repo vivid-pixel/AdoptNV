@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import math
-
-from adoptnv_core import build_results
+from adoptnv import build_results
 from nicegui import ui
 
 
