@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import shelve
+import shelters
 
 # Global constants
 CACHE_FILE = "adoptnv_results"
@@ -41,6 +42,8 @@ def cache_is_recent(cache_date):
 
 
 def build_results():
+    """Handles logic for the cache of results, searching for new results or reloading old ones."""
+
     with shelve.open(CACHE_FILE) as results_cache:
         # first_run: cache file was empty; cache_discarded: file too old; exception: unrecoverable error
         return_flags = {
@@ -110,24 +113,25 @@ def search_for_animals():
     # Declare animals_list to store the individual pets
     animals_list = []
 
+    # Try out new dataclass
+    animal_foundation = shelters.AnimalFoundation()
+
     # Load the first page of the adoption search (we'll loop through all pages later)
-    url = "https://animalfoundation.com/adopt-a-pet/adoption-search"
-    page = requests.get(url)
+    page = requests.get(animal_foundation.get_base_url())
     soup = BeautifulSoup(page.content, "html.parser")
 
     # Find list of pages and define variable with total count.
     pages_element = soup.find("li", class_="next")
-    total_pages = int(pages_element.previous)
+    animal_foundation.set_total_pages(int(pages_element.previous))
 
-    current_page = 1  # Declare and define page counter
+    # Increment the page counter, so we don't download the first page again
+    animal_foundation.set_page_number(2)
 
     # Keep scraping adoption results until we've parsed the final page
-    while current_page <= total_pages:
-        # Eliminate redundant request parsing (we already downloaded the first page)
-        if not current_page == 1:
-            url = f"https://animalfoundation.com/adopt-a-pet/adoption-search?ccm_paging_p={current_page}"
-            page = requests.get(url)
-            soup = BeautifulSoup(page.content, "html.parser")
+    while animal_foundation.get_page_number() <= animal_foundation.get_total_pages():
+        current_page = animal_foundation.get_page_number()
+        page = requests.get(animal_foundation.get_filter_url())
+        soup = BeautifulSoup(page.content, "html.parser")
 
         # Grab the results from this page
         results = soup.find(id="list-results")
@@ -172,7 +176,7 @@ def search_for_animals():
                                  "Fee": pet_has_fee})
 
         # Increment page number before we continue the loop
-        current_page += 1
+        animal_foundation.set_page_number(current_page + 1)
 
     # Now return the list of animals to the parent method
     return animals_list
