@@ -6,8 +6,8 @@ from dataclasses import dataclass
 class AnimalShelter:
     name = str
     base_url = str
-    filter_options = str
-    filters = str
+    filter_options = dict
+    filters = dict
     filter_url = str
     page_number = 1
     total_pages = int
@@ -18,11 +18,14 @@ class AnimalShelter:
     def get_base_url(self):
         return self.base_url
 
-    def get_filter_options(self):
-        return self.filter_options
+    def get_filter_keys(self):
+        return self.filter_options.keys()
+
+    def get_filter_values(self):
+        return self.filter_options.values()
 
     def get_filters(self):
-        return self.filters
+        return self.filter_options.items()
 
     def get_filter_url(self):
         return self.filter_url

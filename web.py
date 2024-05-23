@@ -2,6 +2,7 @@
 import math
 from adoptnv import build_results
 from nicegui import ui
+import shelters
 
 
 def include_page_top():
@@ -22,7 +23,21 @@ def include_page_bottom():
 def index_page():
     include_page_top()
 
-    ui.label("Welcome to AdoptNV.")
+    ui.label("Welcome to AdoptNV. :-)")
+
+    animal_foundation = shelters.AnimalFoundation()
+    available_filters = animal_foundation.get_filters()
+
+
+    with ui.row().classes('w-full'):
+        for filter in available_filters:
+            # filter[0] is the filter key/category, and filter[1] is a list of the possible values for it.
+            with ui.dropdown_button(filter[0], auto_close=True):
+                for filter_value in filter[1]:
+                    # https://github.com/zauberzeug/nicegui/wiki/FAQs#why-do-all-my-elements-have-the-same-value
+                    ui.item(filter_value, on_click=lambda selected_value=filter_value: ui.notify(f"{selected_value}"))
+
+    ui.label("Filter options are currently just for show, but the search button works:")
     ui.button("Click here to find a pet pal", on_click=lambda: ui.navigate.to(find_pets_page))
 
     include_page_bottom()
