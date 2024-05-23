@@ -93,25 +93,26 @@ def display_results(pets_list, selected_page=1):
     starting_from = selected_page * 10
 
     # Begin iterating and printing pets. Uses list slicing to skip pets from previous pages
-    for animal in pets_list[starting_from:]:
-        if pets_on_page < pets_per_page:
-            pets_on_page += 1
+    with ui.row().classes('w-full'):
+        for animal in pets_list[starting_from:]:
+            if pets_on_page < pets_per_page:
+                pets_on_page += 1
 
-            with ui.card():
-                with ui.link(target=animal["URL"]):
-                    with ui.image(animal["Image"]).classes("w-64"):
-                        ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
-                with ui.grid(columns=2):
-                    ui.label("Stray: ")
-                    ui.label(str(animal["Stray"]))
-                    ui.label("Location: ")
-                    ui.label(animal["Location"])
-                    ui.label("Sex: ")
-                    ui.label(animal["Sex"])
-                    ui.label("ID: ")
-                    ui.label(animal["ID"])
-                    ui.label("Fee: ")
-                    ui.label(str(animal["Fee"]))
+                with ui.card():
+                    with ui.link(target=animal["URL"]):
+                        with ui.image(animal["Image"]).classes("w-64"):
+                            ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
+                    with ui.grid(columns=2):
+                        ui.label("Stray: ")
+                        ui.label(str(animal["Stray"]))
+                        ui.label("Location: ")
+                        ui.label(animal["Location"])
+                        ui.label("Sex: ")
+                        ui.label(animal["Sex"])
+                        ui.label("ID: ")
+                        ui.label(animal["ID"])
+                        ui.label("Fee: ")
+                        ui.label(str(animal["Fee"]))
 
 
 ui.run(reload=False, title="AdoptNV :: Find pets in Nevada!", dark=True)
