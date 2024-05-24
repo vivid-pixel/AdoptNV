@@ -41,7 +41,7 @@ def cache_is_recent(cache_date):
         return False
 
 
-def build_results():
+def build_results(shelter):
     """Handles logic for the cache of results, searching for new results or reloading old ones."""
 
     with shelve.open(CACHE_FILE) as results_cache:
@@ -66,7 +66,7 @@ def build_results():
             return_flags["exception"] = bad_thing
         finally:
             if return_flags["first_run"] or return_flags["cache_discarded"]:
-                animals_list = search_for_animals()
+                animals_list = search_for_animals(shelter)
                 save_results(animals_list)
             else:
                 # Load the results cache, but we don't need to save as we aren't updating/changing the cache
@@ -76,61 +76,27 @@ def build_results():
         return animals_list, return_flags
 
 
-# def print_results(animals_list):
-#     """Print adoptable animal results."""
-#     list_length = len(animals_list)
-#
-#     if list_length == 0:
-#         print("Seems like the list failed to populate.")
-#     else:
-#         print("Printing search results.")
-#         spacer = "======"
-#         divider = "---"
-#         print(f"{spacer} RESULTS ({list_length} animals found) {spacer}")
-#         try:
-#             for animal in animals_list:
-#                 # Name, Stray, Image, URL, Location, Sex, ID, Fee
-#                 print(f"Name: {animal["Name"]}")
-#                 print(f"Stray: {animal["Stray"]}")
-#                 print(f"Image: {animal["Image"]}")
-#                 print(f"URL: {animal["URL"]}")
-#                 print(f"Location: {animal["Location"]}")
-#                 print(f"Sex: {animal["Sex"]}")
-#                 print(f"ID: {animal["ID"]}")
-#                 print(f"Fee: {animal["Fee"]}")
-#                 print(divider)
-#         except TypeError:
-#             print("Something seems wrong with the list of results. Unable to populate list.")
-#         finally:
-#             print(f"{spacer} END OF RESULTS {spacer}")
-
-
-def search_for_animals():
+def search_for_animals(shelter):
     """Scour the net for cute animals that want to adopt a human. Returns animals_list"""
-
-    # TODO: Nevada SPCA, RescueMe!
 
     # Declare animals_list to store the individual pets
     animals_list = []
 
-    # Try out new dataclass
-    animal_foundation = shelters.AnimalFoundation()
-
     # Load the first page of the adoption search (we'll loop through all pages later)
-    page = requests.get(animal_foundation.get_base_url())
+    page = requests.get(shelter.get_base_url())
     soup = BeautifulSoup(page.content, "html.parser")
 
     # Find list of pages and define variable with total count.
     pages_element = soup.find("li", class_="next")
-    animal_foundation.set_total_pages(int(pages_element.previous))
+    shelter.set_total_pages(int(pages_element.previous))
 
     # Increment the page counter, so we don't download the first page again
-    animal_foundation.set_page_number(2)
+    shelter.set_page_number(2)
 
     # Keep scraping adoption results until we've parsed the final page
-    while animal_foundation.get_page_number() <= animal_foundation.get_total_pages():
-        current_page = animal_foundation.get_page_number()
-        page = requests.get(animal_foundation.get_filter_url())
+    while shelter.get_page_number() <= shelter.get_total_pages():
+        current_page = shelter.get_page_number()
+        page = requests.get(shelter.get_filter_url())
         soup = BeautifulSoup(page.content, "html.parser")
 
         # Grab the results from this page
@@ -176,7 +142,7 @@ def search_for_animals():
                                  "Fee": pet_has_fee})
 
         # Increment page number before we continue the loop
-        animal_foundation.set_page_number(current_page + 1)
+        shelter.set_page_number(current_page + 1)
 
     # Now return the list of animals to the parent method
     return animals_list

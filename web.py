@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import asyncio
 import math
 from adoptnv import build_results
 from nicegui import ui
@@ -26,28 +27,32 @@ def index_page():
     ui.label("Welcome to AdoptNV. :-)")
 
     animal_foundation = shelters.AnimalFoundation()
-    available_filters = animal_foundation.get_filters()
-
+    available_filters = animal_foundation.get_filter_options()
 
     with ui.row().classes('w-full'):
         for filter in available_filters:
             # filter[0] is the filter key/category, and filter[1] is a list of the possible values for it.
+
             with ui.dropdown_button(filter[0], auto_close=True):
                 for filter_value in filter[1]:
                     # https://github.com/zauberzeug/nicegui/wiki/FAQs#why-do-all-my-elements-have-the-same-value
-                    ui.item(filter_value, on_click=lambda selected_value=filter_value: ui.notify(f"{selected_value}"))
+                    ui.item(filter_value, on_click=lambda selected_value=filter_value: ui
+                            .notify(f"You clicked {selected_value}"))
+                    # ui.item(filter_value, on_click=lambda filter_option=filter, selected_value=filter_value: animal_foundation.
+                    #        set_active_filter(filter, selected_value))
+
 
     ui.label("Filter options are currently just for show, but the search button works:")
-    ui.button("Click here to find a pet pal", on_click=lambda: ui.navigate.to(find_pets_page))
+    ui.button("Click here to find a pet pal", on_click=lambda: find_pets(animal_foundation))
 
     include_page_bottom()
 
 
-@ui.page("/pets")
-def find_pets_page():
-    include_page_top()
+def find_pets(shelter):
+    ui.notify("Loading as quickly as I can!")
 
-    pet_results, return_flags = build_results()
+    # Build results
+    pet_results, return_flags = build_results(shelter)
 
     # Explanation of flags: first_run: cache file empty; cache_discarded: file too old; exception: unrecoverable error
     if return_flags["exception"] is not None:
@@ -56,7 +61,7 @@ def find_pets_page():
     else:
         # List was successfully created. Check the other flags for a tailored greeting
         if return_flags["first_run"]:
-            ui.label("Welcome to AdoptNV! I'll help you find the perfect animal companion.")
+            ui.label("Allow me to help you find the perfect animal companion.")
         elif return_flags["cache_discarded"]:
             ui.label("Welcome back to AdoptNV!")
             ui.label("You've searched for animals previously, but I'll fetch you some fresh results.")
@@ -67,7 +72,32 @@ def find_pets_page():
         # Done with greetings; now show the pet results.
         display_results(pet_results, 1)
 
-    include_page_bottom()
+# @ui.page("/pets")
+# def find_pets_page():
+#     include_page_top()
+#
+#     pet_results, return_flags = build_results()
+#     active_filters = animal_foundation.get_active_filters()
+#
+#     # Explanation of flags: first_run: cache file empty; cache_discarded: file too old; exception: unrecoverable error
+#     if return_flags["exception"] is not None:
+#         # Don't try to print the list if we had an unrecoverable exception.
+#         ui.log(return_flags["exception"])
+#     else:
+#         # List was successfully created. Check the other flags for a tailored greeting
+#         if return_flags["first_run"]:
+#             ui.label("Welcome to AdoptNV! I'll help you find the perfect animal companion.")
+#         elif return_flags["cache_discarded"]:
+#             ui.label("Welcome back to AdoptNV!")
+#             ui.label("You've searched for animals previously, but I'll fetch you some fresh results.")
+#         else:
+#             ui.label("Welcome back to AdoptNV!")
+#             ui.label("I see you've performed a recent search, so I'll restore those results from the cache.")
+#
+#         # Done with greetings; now show the pet results.
+#         display_results(pet_results, 1)
+#
+#     include_page_bottom()
 
 
 @ui.refreshable

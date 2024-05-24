@@ -18,13 +18,7 @@ class AnimalShelter:
     def get_base_url(self):
         return self.base_url
 
-    def get_filter_keys(self):
-        return self.filter_options.keys()
-
-    def get_filter_values(self):
-        return self.filter_options.values()
-
-    def get_filters(self):
+    def get_filter_options(self):
         return self.filter_options.items()
 
     def get_filter_url(self):
@@ -32,6 +26,9 @@ class AnimalShelter:
 
     def get_page_number(self):
         return self.page_number
+
+    def get_active_filters(self):
+        return self.active_filters
 
     def get_total_pages(self):
         return self.total_pages
@@ -41,6 +38,9 @@ class AnimalShelter:
 
     def set_total_pages(self, total_pages):
         self.total_pages = total_pages
+
+    def set_active_filter(self, filter_name, filter_value):
+        self.active_filters[filter_name] = filter_value
 
 
 class AnimalFoundation(AnimalShelter):
@@ -59,7 +59,7 @@ class AnimalFoundation(AnimalShelter):
                                "age": ["", "Unknown", "Under+6+Months", "6+Months+to+3+Years", "3+years+"],
                                "id": ""
                                }
-        self.filters = {"type": "",
+        self.active_filters = {"type": "",
                         "sex": "",
                         "size": "",
                         "location": "",
@@ -68,10 +68,10 @@ class AnimalFoundation(AnimalShelter):
                         "id": ""
                         }
         self.filter_url = \
-            (f"https://animalfoundation.com/adopt-a-pet/adoption-search?animalType={self.filters["type"]}&animalSex="
-             f"{self.filters["sex"]}&animalSize={self.filters["size"]}&filter=Search&location="
-             f"{self.filters["location"]}&animalStatus={self.filters["status"]}&animalAge={self.filters["age"]}"
-             f"&animalID={self.filters["id"]}&ccm_paging_p={self.page_number}")
+            (f"https://animalfoundation.com/adopt-a-pet/adoption-search?animalType={self.active_filters["type"]}"
+             f"&animalSex={self.active_filters["sex"]}&animalSize={self.active_filters["size"]}&filter=Search&location="
+             f"{self.active_filters["location"]}&animalStatus={self.active_filters["status"]}&animalAge="
+             f"{self.active_filters["age"]}&animalID={self.active_filters["id"]}&ccm_paging_p={self.page_number}")
 
 
 class NevadaSPCA:
@@ -90,7 +90,7 @@ class RescueMe:
     def __init__(self):
         self.base_url = "https://cat.rescueme.org/Nevada"
         self.name = "Rescue Me! Animal Rescue Network"
-        self.filters = {
+        self.filter_options = {
             "type": ["dog", "cat", "horse", "rabbit", "farmanimal", "rodent", "reptile", "bird", "wildbird", "wildlife"]
         }
         self.filter_url = f"https://{self.filters["type"]}.rescueme.org/Nevada"
