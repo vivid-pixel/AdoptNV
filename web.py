@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-import asyncio
 import math
-from adoptnv import build_results
+from adoptnv import results_io
 from nicegui import ui
 import shelters
 
@@ -9,140 +8,112 @@ import shelters
 def include_page_top():
     """Shared among all pages and includes header text."""
 
-    with ui.header(elevated=True).style("background-color: #3d3d3d").classes("items-center justify-between"):
-        ui.link("AdoptNV", "/")
+    with ui.header(elevated=True).style("background-color: #2a2a2a").classes("items-center justify-between"):
+        with ui.row().classes("w-full"):
+            ui.link("AdoptNV", "/")
+            ui.label("Your pet companion awaits you")
 
 
 def include_page_bottom():
     """Shared among all pages and includes footer."""
 
-    with ui.footer().style("background-color: #6c6c6c"):
-        ui.label("AdoptNV uses Python, NiceGUI, BeautifulSoup. Not affiliated with any animal shelter.")
+    with ui.footer().style("background-color: #1f1f1f"):
+        with ui.row():
+            ui.markdown("AdoptNV uses [Python 3](https://www.python.org/), "
+                        "[BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/), "
+                        "and [NiceGUI](https://nicegui.io/). "
+                        "This application has no affiliation with any shelters.")
 
 
 @ui.page("/")
 def index_page():
     include_page_top()
 
-    ui.label("Welcome to AdoptNV. :-)")
-
     animal_foundation = shelters.AnimalFoundation()
     available_filters = animal_foundation.get_filter_options()
 
-    with ui.row().classes('w-full'):
-        for filter in available_filters:
-            # filter[0] is the filter key/category, and filter[1] is a list of the possible values for it.
-
-            with ui.dropdown_button(filter[0], auto_close=True):
-                for filter_value in filter[1]:
-                    # https://github.com/zauberzeug/nicegui/wiki/FAQs#why-do-all-my-elements-have-the-same-value
-                    ui.item(filter_value, on_click=lambda selected_value=filter_value: ui
-                            .notify(f"You clicked {selected_value}"))
-                    # ui.item(filter_value, on_click=lambda filter_option=filter, selected_value=filter_value: animal_foundation.
-                    #        set_active_filter(filter, selected_value))
-
+    with ui.row().classes("w-full"):
+        for category in available_filters:
+            with ui.dropdown_button(category, auto_close=True):
+                # https://github.com/zauberzeug/nicegui/wiki/FAQs#why-do-all-my-elements-have-the-same-value
+                for option in available_filters[category]:
+                    ui.item(option, on_click=lambda filter_category=category, filter_option=option: ui
+                            .notify(f'You clicked "{filter_option}" from category "{filter_category}"'))
 
     ui.label("Filter options are currently just for show, but the search button works:")
-    ui.button("Click here to find a pet pal", on_click=lambda: find_pets(animal_foundation))
+    ui.link("Find a pet pal!", pets_page)
 
     include_page_bottom()
 
 
-def find_pets(shelter):
-    ui.notify("Loading as quickly as I can!")
+@ui.page('/pets')
+async def pets_page():
+    include_page_top()
+    # spinner = ui.spinner(size="lg")
+    results_io()
+    # await ui.context.client.connected()
+    # spinner.visible = False
 
-    # Build results
-    pet_results, return_flags = build_results(shelter)
+    @ui.refreshable
+    def show_results(selected_page=1):
+        pets_list = shelters.Results.get_pets()
+        return_flags = shelters.Results.get_flags()
 
-    # Explanation of flags: first_run: cache file empty; cache_discarded: file too old; exception: unrecoverable error
-    if return_flags["exception"] is not None:
-        # Don't try to print the list if we had an unrecoverable exception.
-        ui.log(return_flags["exception"])
-    else:
-        # List was successfully created. Check the other flags for a tailored greeting
-        if return_flags["first_run"]:
-            ui.label("Allow me to help you find the perfect animal companion.")
-        elif return_flags["cache_discarded"]:
-            ui.label("Welcome back to AdoptNV!")
-            ui.label("You've searched for animals previously, but I'll fetch you some fresh results.")
-        else:
-            ui.label("Welcome back to AdoptNV!")
-            ui.label("I see you've performed a recent search, so I'll restore those results from the cache.")
+        with ui.row():
+            # Check return flags to create tailored greeting
+            # FLAGS: first_run == cache file empty; cache_discarded == file too old; exception: unrecoverable error
+            if return_flags["exception"] is not None:
+                # Don't try to print the list if we had an unrecoverable exception.
+                ui.label(return_flags["exception"])
+            elif return_flags["first_run"]:
+                ui.label("Here are some potential matches: ")
+            elif return_flags["cache_discarded"]:
+                ui.label("Welcome back! You've searched for animals previously, but I'll fetch you some fresh results.")
+            else:
+                ui.label("I see you've performed a recent search, so I'll restore those results from the cache.")
 
-        # Done with greetings; now show the pet results.
-        display_results(pet_results, 1)
+        # Set per-page limit for number of pets to display
+        pets_per_page = 10
 
-# @ui.page("/pets")
-# def find_pets_page():
-#     include_page_top()
-#
-#     pet_results, return_flags = build_results()
-#     active_filters = animal_foundation.get_active_filters()
-#
-#     # Explanation of flags: first_run: cache file empty; cache_discarded: file too old; exception: unrecoverable error
-#     if return_flags["exception"] is not None:
-#         # Don't try to print the list if we had an unrecoverable exception.
-#         ui.log(return_flags["exception"])
-#     else:
-#         # List was successfully created. Check the other flags for a tailored greeting
-#         if return_flags["first_run"]:
-#             ui.label("Welcome to AdoptNV! I'll help you find the perfect animal companion.")
-#         elif return_flags["cache_discarded"]:
-#             ui.label("Welcome back to AdoptNV!")
-#             ui.label("You've searched for animals previously, but I'll fetch you some fresh results.")
-#         else:
-#             ui.label("Welcome back to AdoptNV!")
-#             ui.label("I see you've performed a recent search, so I'll restore those results from the cache.")
-#
-#         # Done with greetings; now show the pet results.
-#         display_results(pet_results, 1)
-#
-#     include_page_bottom()
+        # Divides number of animals by how many animals per page, then rounds it up to nearest int.
+        pages_total = math.ceil(len(pets_list) / pets_per_page)
 
+        # Create a list of page numbers for the page selector
+        page_numbers = []
+        for this_page in range(1, pages_total):
+            page_numbers.append(this_page)
 
-@ui.refreshable
-def display_results(pets_list, selected_page=1):
-    pets_per_page = 10
+        # Display page selector above results
+        with ui.select(page_numbers, value=selected_page, label="Page").classes('w-20') as page_selector:
+            page_selector.on_value_change(lambda: show_results.refresh(page_selector.value))
 
-    # Divides number of animals by how many animals per page, then rounds it up to nearest int.
-    pages_total = math.ceil(len(pets_list) / pets_per_page)
+        # Begin iterating and printing pets. Uses list slicing to skip pets from previous pages
+        with ui.row().classes('w-full'):
+            # Count pets as we display them on the page, so we know when to stop
+            pets_on_page = 0
 
-    # Create a list of page numbers for the page selector
-    page_numbers = []
-    for page in range(1, pages_total):
-        page_numbers.append(page)
+            # Skip pets that should be on previous pages
+            starting_from = selected_page * 10
+            for animal in pets_list[starting_from:]:
+                if pets_on_page < pets_per_page:
+                    pets_on_page += 1
 
-    # Display page selector above results
-    with ui.select(page_numbers, value=selected_page, label="Page").classes('w-20') as page_selector:
-        page_selector.on_value_change(lambda: display_results.refresh(pets_list, page_selector.value))
+                    with ui.card():
+                        # The clickable picture of the pet, along with its name
+                        with ui.link(target=animal["URL"]):
+                            with ui.image(animal["Image"]).classes("w-64"):
+                                ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
+                        # The rest of the pet's attributes
+                        with ui.card_section():
+                            ui.label(f"Stray: {animal["Stray"]}")
+                            ui.label(f"Location: {animal["Location"]}")
+                            ui.label(f"Sex: {animal["Sex"]}")
+                            ui.label(f"ID: {animal["ID"]}")
+                            ui.label(f"Fee: {animal["Fee"]}")
 
-    # Count pets as we display them on the page, so we know when to stop
-    pets_on_page = 0
+    include_page_bottom()
 
-    # Skip pets that should be on previous pages
-    starting_from = selected_page * 10
-
-    # Begin iterating and printing pets. Uses list slicing to skip pets from previous pages
-    with ui.row().classes('w-full'):
-        for animal in pets_list[starting_from:]:
-            if pets_on_page < pets_per_page:
-                pets_on_page += 1
-
-                with ui.card():
-                    with ui.link(target=animal["URL"]):
-                        with ui.image(animal["Image"]).classes("w-64"):
-                            ui.label(animal["Name"]).classes("absolute-bottom text-subtitle2 text-center")
-                    with ui.grid(columns=2):
-                        ui.label("Stray: ")
-                        ui.label(str(animal["Stray"]))
-                        ui.label("Location: ")
-                        ui.label(animal["Location"])
-                        ui.label("Sex: ")
-                        ui.label(animal["Sex"])
-                        ui.label("ID: ")
-                        ui.label(animal["ID"])
-                        ui.label("Fee: ")
-                        ui.label(str(animal["Fee"]))
+    return show_results()
 
 
 ui.run(reload=False, title="AdoptNV :: Find pets in Nevada!", dark=True)
