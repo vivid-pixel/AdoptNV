@@ -1,4 +1,8 @@
 # AdoptNV (early prototype)
+## Important note: 
+This project is on hold pending a rewrite using the Petfinder API. Sadly, Purina seems to have stopped issuing Petfinder API keys in early 2024. They have not yet disclosed when keys for API access will be made available again.
+Web scraping is a more involved and more fragile method of obtaining data. Individually scraping the website for each animal shelter would not be feasable long term.
+
 The purpose of *AdoptNV* is to facilitate pet adoption in the U.S. state of Nevada by creating a central animal shelter
 repository that can be accessed from any Internet-connected device and help humans connect with their perfect companion.
 
